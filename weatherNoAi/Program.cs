@@ -7,7 +7,20 @@ class Program
         DateTime now = DateTime.Now;
         
         Console.WriteLine($"Welcome to weatherNoai!{Environment.NewLine} {now}");
-        Console.Write("Enter your city: ");
-        string? cityInput = Console.ReadLine();
+        string? cityInput;
+        
+        do
+        {
+            Console.Write("Enter your city: ");
+            cityInput = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(cityInput))
+            {
+                Console.WriteLine("Empty value, please enter again.");
+            }
+        } 
+        while (string.IsNullOrWhiteSpace(cityInput));
+
+        Console.WriteLine($"Selected city {cityInput}.");
     }
 }
