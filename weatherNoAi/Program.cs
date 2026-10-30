@@ -1,8 +1,10 @@
-﻿namespace weatherNoAi;
+﻿using Microsoft.Extensions.Configuration;
+
+namespace weatherNoAi;
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         DateTime now = DateTime.Now;
         
@@ -22,5 +24,38 @@ class Program
         while (string.IsNullOrWhiteSpace(cityInput));
 
         Console.WriteLine($"Selected city {cityInput}.");
+
+        IConfiguration config = new ConfigurationBuilder()
+            .AddUserSecrets<Program>()
+            .Build();
+        
+        string? apiKey = config["WeatherApi:Key"];
+         
+            
+            
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            Console.WriteLine("API Key is missing.");
+            return;
+        }
+        
+        string url =
+             "https://api.weatherapi.com/v1/current.json" + 
+            $"?key={Uri.EscapeDataString(apiKey)}" +
+            $"&q={Uri.EscapeDataString(cityInput!)}";
+        
+        
+        using HttpClient client = new();
+        
+        using HttpResponseMessage response = await client.GetAsync(url);
+        
+        string responseBody = await response.Content.ReadAsStringAsync();
+        
+        Console.WriteLine(
+            $"HTTP status: {(int)response.StatusCode} {response.StatusCode}");
+        
+        Console.WriteLine("API Response:");
+        Console.WriteLine(responseBody);
+        
     }
 }
