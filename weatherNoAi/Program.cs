@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
-
+using System.Text.Json;
 namespace weatherNoAi;
 
 class Program
@@ -24,6 +24,7 @@ class Program
         while (string.IsNullOrWhiteSpace(cityInput));
 
         Console.WriteLine($"Selected city {cityInput}.");
+        Console.WriteLine("=== API STATUS ===");
 
         IConfiguration config = new ConfigurationBuilder()
             .AddUserSecrets<Program>()
@@ -54,8 +55,25 @@ class Program
         Console.WriteLine(
             $"HTTP status: {(int)response.StatusCode} {response.StatusCode}");
         
-        Console.WriteLine("API Response:");
-        Console.WriteLine(responseBody);
-        
+       
+       using JsonDocument document = JsonDocument.Parse(responseBody);
+       JsonElement root = document.RootElement;
+       
+       JsonElement location = root.GetProperty("location");
+       string city = location.GetProperty("name").GetString()!;
+       
+       JsonElement current = root.GetProperty("current");
+       double temperatureC = current.GetProperty("temp_c").GetDouble();
+       
+       JsonElement condition = current.GetProperty("condition");
+       string describeCondition = condition.GetProperty("text").GetString()!;
+
+       Console.WriteLine("=== WEATHER FORECAST ===");
+       
+       Console.WriteLine($"Citi: {city}");
+       Console.WriteLine($"Temp c: {temperatureC}");
+       Console.WriteLine($"Condition: {describeCondition}");
+
+
     }
 }
