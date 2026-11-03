@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Text.Json;
+using System.Net.Http;
+
 namespace weatherNoAi;
 
 class Program
@@ -9,7 +11,7 @@ class Program
         DateTime now = DateTime.Now;
         
         Console.WriteLine($"Welcome to weatherNoai!{Environment.NewLine} {now}");
-        string? cityInput;
+        string cityInput;
         
         do
         {
@@ -22,8 +24,10 @@ class Program
             }
         } 
         while (string.IsNullOrWhiteSpace(cityInput));
-
-        Console.WriteLine($"Selected city {cityInput}.");
+        
+        string cityInputClean = cityInput.ToLower().Trim();
+        
+        Console.WriteLine($"Selected city {cityInputClean}.");
         Console.WriteLine("=== API STATUS ===");
 
         IConfiguration config = new ConfigurationBuilder()
@@ -31,8 +35,7 @@ class Program
             .Build();
         
         string? apiKey = config["WeatherApi:Key"];
-         
-            
+        
             
         if (string.IsNullOrWhiteSpace(apiKey))
         {
@@ -43,14 +46,19 @@ class Program
         string url =
              "https://api.weatherapi.com/v1/current.json" + 
             $"?key={Uri.EscapeDataString(apiKey)}" +
-            $"&q={Uri.EscapeDataString(cityInput!)}";
+            $"&q={Uri.EscapeDataString(cityInputClean)}";
         
         
         using HttpClient client = new();
-        
         using HttpResponseMessage response = await client.GetAsync(url);
-        
         string responseBody = await response.Content.ReadAsStringAsync();
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Weather API returned error: " + response.StatusCode);
+            Console.WriteLine(responseBody);
+            return;
+        }
         
         Console.WriteLine(
             $"HTTP status: {(int)response.StatusCode} {response.StatusCode}");
@@ -62,6 +70,8 @@ class Program
        JsonElement location = root.GetProperty("location");
        string city = location.GetProperty("name").GetString()!;
        
+       string country = location.GetProperty("country").GetString()!;
+       
        JsonElement current = root.GetProperty("current");
        double temperatureC = current.GetProperty("temp_c").GetDouble();
        
@@ -70,8 +80,8 @@ class Program
 
        Console.WriteLine("=== WEATHER FORECAST ===");
        
-       Console.WriteLine($"Citi: {city}");
-       Console.WriteLine($"Temp c: {temperatureC}");
+       Console.WriteLine($"Country: {country} {Environment.NewLine}City: {city}");
+       Console.WriteLine($"Temperature: {temperatureC}°C");
        Console.WriteLine($"Condition: {describeCondition}");
 
 
